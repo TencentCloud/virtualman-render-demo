@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0"
+    />
+    <title>腾讯数智人</title>
+    <link rel="stylesheet" href="./css/index.css" />
+    <link rel="icon" href="//cloudcache.tencent-cloud.com/qcloud/favicon.ico" type="image/x-icon"/>
+  </head>
+
+  <body>
+    <div class="wrapper">
+      <!-- 数智人视频播放器 -->
+      <div class="video-area"></div>
+      <!-- 加载界面 -->
+      <div class="loading">
+        <div>数智人加载中<span class="dot"></span></div>
+      </div>
+
+      <!-- 开始服务按钮 -->
+      <button class="btn-enter"></button>
+
+      <!-- 再次服务按钮 -->
+      <button class="btn-re-enter"></button>
+
+      <!-- 页面header -->
+      <div class="header">
+        <h1>数智人会话互动</h1>
+        <p>基于大模型对话能力全面升级</p>
+        <!-- 结束服务按钮 -->
+        <button class="btn-exit"></button>
+      </div>
+
+      <!-- 背景颜色header -->
+      <div class="header-bg"></div>
+
+      <!-- 用户输入文本气泡 -->
+      <div class="chat-user">
+        <div></div>
+      </div>
+
+      <!-- 数智人返回文本气泡 -->
+      <div class="chat-ai chat-ai-text">
+        <div>
+          <pre></pre>
+        </div>
+      </div>
+
+      <!-- 数智人返回选择题气泡 -->
+      <div class="chat-ai chat-ai-option">
+        <div>
+          <p class="title"></p>
+          <div class="list"></div>
+        </div>
+      </div>
+
+      <!-- 数智人返回图片气泡 -->
+      <div class="chat-ai chat-ai-image">
+        <div>
+          <p class="title"></p>
+          <div class="image" style="background-image: url('')"></div>
+        </div>
+      </div>
+
+      <!-- 数智人返回视频气泡 -->
+      <div class="chat-ai chat-ai-video">
+        <div>
+          <p class="title"></p>
+          <div class="video">
+            <video src=""></video>
+          </div>
+        </div>
+      </div>
+
+      <!-- 数智人返回文本弹窗气泡 -->
+      <div class="chat-ai chat-ai-popup">
+        <div>
+          <p class="title"></p>
+          <p>
+            <button class="button">查看详情</button>
+          </p>
+        </div>
+      </div>
+
+      <!-- 跑马灯 -->
+      <div class="chat-marquee">
+        <div class="title"></div>
+        <div class="list">
+          <div class="marquee"></div>
+          <div class="marquee"></div>
+          <div class="marquee"></div>
+        </div>
+      </div>
+
+      <!-- asr识别界面 -->
+      <div class="asr-pop">
+        <div class="asr-text"></div>
+        <div class="asr-wave">
+          <canvas class="wave-left"></canvas>
+          <canvas class="wave-right"></canvas>
+        </div>
+      </div>
+
+      <!-- 操作区 -->
+      <div class="action-wrapper">
+        <!-- 停止生成按钮 -->
+        <button class="btn-stop-create"></button>
+        <!-- 重新生成按钮 -->
+        <button class="btn-recreate"></button>
+        <!-- 语音输入按钮界面 -->
+        <div class="audio-action-wrapper">
+          <button class="btn-audio"></button>
+          <button class="btn-keyboard"></button>
+        </div>
+        <!-- 文本输入界面 -->
+        <div class="keyboard-action-wrapper">
+          <button class="btn-mic"></button>
+          <div class="text-input" contenteditable="true"></div>
+          <button class="btn-send">发送</button>
+        </div>
+      </div>
+
+      <!-- 遮罩 -->
+      <div class="mask"></div>
+
+      <!-- 弹窗 -->
+      <div class="chat-popup">
+        <button class="close"></button>
+        <div></div>
+      </div>
+
+      <!-- 异常弹窗 -->
+      <div class="warn">
+        <img src="./img/warn.svg" style="width: 50px;height: 50px;" alt="">
+        <p class="info">数智人配置有变更</p>
+        <button>刷新页面</button>
+      </div>
+    </div>
+
+    <script src="./lib/speechrecognizer.js"></script>
+    <script src="./lib/TXIVHSDK_Web_Client_V3.2.5_Release.js"></script>
+    <script src="./lib/marked.min.js"></script>
+    <script src="./js/index.js"></script>
+  </body>
+</html>
