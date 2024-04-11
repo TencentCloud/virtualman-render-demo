@@ -13,7 +13,6 @@ const btnStopCreateElt = document.querySelector(".btn-stop-create");
 const btnRecreateElt = document.querySelector(".btn-recreate");
 const btnAudioElt = document.querySelector(".btn-audio");
 const btnKeyboardElt = document.querySelector(".btn-keyboard");
-const btnMicElt = document.querySelector(".btn-mic");
 const btnSendElt = document.querySelector(".btn-send");
 const textInputElt = document.querySelector(".text-input");
 // 气泡相关
@@ -700,14 +699,6 @@ async function init() {
             hide(1);
             keyboardActionElt.style.display = "block";
             actionElt.classList.remove("audio");
-        });
-
-        // 切换语音输入按钮事件
-        btnMicElt.addEventListener("click", () => {
-            globalStatus.inputActionType = "audio";
-            hide(4);
-            audioActionElt.style.display = "block";
-            actionElt.classList.add("audio");
         });
 
         // 发送文本按钮事件
