@@ -806,7 +806,7 @@ ol {
 .text-input {
   overflow-x: hidden;
   overflow-y: auto;
-  margin: 0 95px 0 55px;
+  margin: 0 95px 0 12px;
   padding: 8px 12px 8px 12px;
   min-height: 40px;
   max-height: 100px;
