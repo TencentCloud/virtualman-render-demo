@@ -602,8 +602,17 @@ function handleShowSessionId(sessionId) {
 
 // 页面初始化
 async function init() {
+  const url = new URL(window.location.href);
+  const searchParams = url.search.slice(1).split('&');
+  const params = {};
+
+  for (const param of searchParams) {
+    const [key, value] = param.split('=');
+    params[key] = value;
+  }
+
   let urlParams = new URLSearchParams(window.location.search);
-  let sign = urlParams.get("sign");
+  let sign = params.sign;
   let virtualmanKey = urlParams.get("virtualmanKey");
   let autoMarquee = urlParams.get("autoMarquee");
   let textArr = [];

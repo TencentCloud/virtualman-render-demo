@@ -25,7 +25,7 @@ chrome浏览器。
 2. 在浏览器中打开 `index.html` 文件。
 3. 添加执行的URL参数，例如：`http://localhost:3000/index.html?virtualmanKey=xxxx&sign=xxxx&config=xxxx`。
  - `virtualmanKey`: 形象唯一标识。
- - `sign`: 签名。
+ - `sign`: 签名。请注意，这里不需要进行 URL 编码。
  - `config`: 获取模型结构的地址，用于生成具体的模型数据地址。
 
 注意： config参数是一个URL地址，用于获取模型结构的JSON文件。该JSON文件包含了模型的详细信息，用于生成具体的模型数据地址。
@@ -65,4 +65,4 @@ config文件内容:
 2. 在浏览器中打开 `index.html` 文件。
 3. 添加执行的URL参数，例如：`http://localhost:3000/index.html?virtualmanKey=xxxx&sign=xxxx`。
  - `virtualmanKey`: 形象唯一标识。
- - `sign`: 签名。
+ - `sign`: 签名。请注意，这里不需要进行 URL 编码。
