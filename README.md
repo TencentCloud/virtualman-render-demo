@@ -66,3 +66,6 @@ config文件内容:
 3. 添加执行的URL参数，例如：`http://localhost:3000/index.html?virtualmanKey=xxxx&sign=xxxx`。
  - `virtualmanKey`: 形象唯一标识。
  - `sign`: 签名。请注意，这里不需要进行 URL 编码。
+
+### 语音识别能力
+ 如果需要开启 ASR，需要在 URL 参数中添加 secretId、secretKey 和 appId参数，。

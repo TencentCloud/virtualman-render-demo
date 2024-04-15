@@ -97,6 +97,15 @@
         </div>
       </div>
 
+      <!-- asr识别界面 -->
+      <div class="asr-pop">
+        <div class="asr-text"></div>
+        <div class="asr-wave">
+          <canvas class="wave-left"></canvas>
+          <canvas class="wave-right"></canvas>
+        </div>
+      </div>
+
       <!-- 操作区 -->
       <div class="action-wrapper">
         <!-- 停止生成按钮 -->
@@ -110,6 +119,7 @@
         </div>
         <!-- 文本输入界面 -->
         <div class="keyboard-action-wrapper">
+          <button class="btn-mic"></button>
           <div class="text-input" contenteditable="true"></div>
           <button class="btn-send">发送</button>
         </div>
@@ -132,6 +142,7 @@
       </div>
     </div>
 
+    <script src="./lib/speechrecognizer.js"></script>
     <script src="./lib/ivh.umd.js"></script>
     <script src="./lib/uuid.min.js"></script>
     <script src="./lib/marked.min.js"></script>

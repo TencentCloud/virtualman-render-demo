@@ -13,6 +13,7 @@ const btnStopCreateElt = document.querySelector(".btn-stop-create");
 const btnRecreateElt = document.querySelector(".btn-recreate");
 const btnAudioElt = document.querySelector(".btn-audio");
 const btnKeyboardElt = document.querySelector(".btn-keyboard");
+const btnMicElt = document.querySelector(".btn-mic");
 const btnSendElt = document.querySelector(".btn-send");
 const textInputElt = document.querySelector(".text-input");
 // 气泡相关
@@ -31,6 +32,9 @@ const chatPopElt = document.querySelector(".chat-popup");
 // 跑马灯
 const chatMarqueeElt = document.querySelector(".chat-marquee");
 const marqueeElt = chatMarqueeElt.querySelector(".list");
+// asr pop
+const asrPopElt = document.querySelector(".asr-pop");
+const asrTextElt = asrPopElt.querySelector(".asr-text");
 // 异常
 const maskElt = document.querySelector(".mask");
 const warnElt = document.querySelector(".warn");
@@ -46,12 +50,26 @@ const globalStatus = {
     status: "end",
     // 跑马灯相关
     marqueeRAFID: null,
+    // ASR音波相关
+    audioStream: null,
     audioCtx: null,
+    // ASR
+    isRecording: false,
     // 输入方式 audio/text
     inputActionType: "text",
 };
 // 开场白,跑马灯等指令
 let command = {};
+// ASR
+const asrConfig = {
+    secretId: "",
+    secretKey: "",
+    appId: 0,
+};
+// ASR对象
+let webAudioSpeechRecognizer;
+// ASR识别结果
+let recordingStr = "";
 // 回复气泡滚动高度
 let aiTextScrollTop = 0;
 // 文本高亮延迟
@@ -85,7 +103,7 @@ function mobileAndTabletCheck() {
 
 // 异常状态
 function showWarnInfo(txt) {
-    hide(1 | 4 | 8 | 16 | 32 | 64 | 128);
+    hide(1 | 2 | 4 | 8 | 16 | 32 | 64 | 128);
     warnElt.querySelector(".info").textContent = txt;
     warnElt.querySelector(".info").title = txt;
     maskElt.style.display = "block";
@@ -97,6 +115,10 @@ function hide(type) {
     // 关闭语音操作界面
     if (type & 1) {
         audioActionElt.style.display = "none";
+    }
+    // 关闭ASR界面
+    if (type & 2) {
+        closeAudioAnalyser();
     }
     // 关闭文本操作界面
     if (type & 4) {
@@ -342,6 +364,7 @@ function initAudio() {
                 },
             })
             .then((stream) => {
+                globalStatus.audioStream = stream;
                 globalStatus.audioCtx = new (window.AudioContext ||
                     window.webkitAudioContext)();
             })
@@ -361,6 +384,239 @@ function initAudio() {
             alert("无法获取浏览器录音功能，请升级浏览器或使用chrome");
         }
     }
+}
+
+// 音频分析
+function analyser(canvasElt, isLeftToRight = true) {
+    const audioCtx = globalStatus.audioCtx;
+    const audioStream = globalStatus.audioStream;
+
+    const rect = canvasElt.getBoundingClientRect();
+    const canvasH = rect.height;
+    const canvasW = 1.8 * canvasH;
+
+    const analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 512;
+    const source = audioCtx.createMediaStreamSource(audioStream);
+
+    source.connect(analyser);
+    // 不连接输出设备, 防止有杂音
+    // analyser.connect(audioCtx.destination)
+
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    canvasElt.width = canvasW;
+    canvasElt.height = canvasH;
+    canvasElt.style.width = `${canvasW}px`;
+    canvasElt.style.height = `${canvasH}px`;
+    const ctx = canvasElt.getContext("2d");
+    // ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
+    const len = 8;
+    const gapW = Math.floor(canvasW / (2 * len));
+    const barW = Math.floor(gapW);
+    let barH;
+
+    const colorArr = [
+        "rgba(69, 123, 255, 1)",
+        "rgba(76, 138, 243, 1)",
+        "rgba(79, 145, 237, 1)",
+        "rgba(81, 150, 231, 1)",
+        "rgba(86, 158, 223, 1)",
+        "rgba(117, 171, 223, 1)",
+        "rgba(123, 177, 217, 1)",
+        "rgba(145, 198, 238, 1)",
+    ];
+
+    function renderFrame() {
+        analyser.getByteFrequencyData(dataArray);
+
+        ctx.clearRect(0, 0, canvasW, canvasH);
+
+        const sign = isLeftToRight ? 1 : -1;
+        let x;
+        if (isLeftToRight) {
+            x = gapW;
+        } else {
+            x = canvasW - gapW;
+        }
+        for (let i = 0; i < len; i++) {
+            const idx = Math.floor(bufferLength / len) * i;
+            barH = Math.floor((canvasH * dataArray[idx]) / 255);
+            if (barH >= canvasH / 2 - barW / 2) {
+                barH = Math.floor(
+                    canvasH / 2 - barW / 2 - (Math.random() * canvasH) / 10
+                );
+            }
+            ctx.fillStyle = colorArr[i];
+            ctx.strokeStyle = colorArr[i];
+            // 矩形
+            ctx.fillRect(x, canvasH / 2 - barH, sign * barW, barH * 2);
+            // 下半圆
+            ctx.beginPath();
+            ctx.arc(
+                x + (sign * barW) / 2,
+                canvasH / 2 + barH,
+                barW / 2,
+                0,
+                Math.PI,
+                false
+            );
+            ctx.moveTo(x, canvasH / 2 + barH);
+            ctx.lineTo(x + sign * barW, canvasH / 2 + barH);
+            ctx.closePath();
+            ctx.stroke();
+            ctx.fill();
+            // 上半圆
+            ctx.beginPath();
+            ctx.arc(
+                x + (sign * barW) / 2,
+                canvasH / 2 - barH,
+                barW / 2,
+                0,
+                Math.PI,
+                true
+            );
+            ctx.moveTo(x, canvasH / 2 - barH);
+            ctx.lineTo(x + sign * barW, canvasH / 2 - barH);
+            ctx.closePath();
+            ctx.stroke();
+            ctx.fill();
+            x += (barW + gapW) * sign;
+        }
+
+        requestAnimationFrame(renderFrame);
+    }
+
+    renderFrame();
+}
+
+// 显示音波
+function openAudioAnalyser() {
+    asrPopElt.style.display = "block";
+    if (!globalStatus.isInitAnalyser) {
+        analyser(asrPopElt.querySelector(".wave-left"), false);
+        analyser(asrPopElt.querySelector(".wave-right"));
+        globalStatus.isInitAnalyser = true;
+    }
+}
+
+// 关闭音波
+function closeAudioAnalyser() {
+    asrPopElt.style.display = "none";
+    asrTextElt.textContent = "";
+}
+
+// ASR鉴权函数
+function signCallback(signStr) {
+    function toUint8Array(wordArray) {
+        // Shortcuts
+        const words = wordArray.words;
+        const sigBytes = wordArray.sigBytes;
+
+        // Convert
+        const u8 = new Uint8Array(sigBytes);
+        for (let i = 0; i < sigBytes; i++) {
+            u8[i] = (words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff;
+        }
+        return u8;
+    }
+
+    function Uint8ArrayToString(fileData) {
+        let dataString = "";
+        for (let i = 0; i < fileData.length; i++) {
+            dataString += String.fromCharCode(fileData[i]);
+        }
+        return dataString;
+    }
+
+    const secretKey = asrConfig.secretKey;
+    const hash = window.CryptoJSTest.HmacSHA1(signStr, secretKey);
+    const bytes = Uint8ArrayToString(toUint8Array(hash));
+    return window.btoa(bytes);
+}
+
+let asrParams = {};
+// 初始化ASR
+async function initASR(callback) {
+    asrParams = {
+        signCallback: signCallback, // 鉴权函数
+        // 用户参数
+        secretid: asrConfig.secretId,
+        secretkey: asrConfig.secretKey,
+        appid: asrConfig.appId,
+        // 实时识别接口参数
+        engine_model_type: "16k_zh", // 因为内置WebRecorder采样16k的数据，所以参数 engineModelType 需要选择16k的引擎，为 '16k_zh'
+        // 以下为非必填参数，可跟据业务自行修改
+        voice_format: 1,
+        hotword_id: "", // 热词key
+        customization_id: "", // 自学习模型key
+        needvad: 1,
+        filter_dirty: 1,
+        filter_modal: 2,
+        filter_punc: 0,
+        convert_num_mode: 1,
+        word_info: 2,
+    };
+    // 开始ASR识别事件
+    btnAudioElt.addEventListener("click", (e) => {
+        if (!globalStatus.audioCtx) {
+            return initAudio();
+        }
+        if (!globalStatus.isRecording) {
+            hide(1);
+            btnExitElt.style.display = "none";
+            startRecord(callback);
+        }
+    });
+}
+
+// 开始ASR识别
+function startRecord(callback) {
+    webAudioSpeechRecognizer = new WebAudioSpeechRecognizer(asrParams);
+    // 开始识别
+    webAudioSpeechRecognizer.OnRecognitionStart = (res) => {
+        console.log("开始识别", res);
+        hide(1 | 32);
+        openAudioAnalyser();
+        globalStatus.isRecording = true;
+        recordingStr = "";
+    };
+    // 一句话开始
+    webAudioSpeechRecognizer.OnSentenceBegin = (res) => {
+        console.log("一句话开始", res);
+    };
+    // 识别变化时
+    webAudioSpeechRecognizer.OnRecognitionResultChange = (res) => {
+        asrTextElt.textContent = recordingStr + res.result.voice_text_str;
+        console.log(recordingStr + res.result.voice_text_str);
+    };
+    // 一句话结束
+    webAudioSpeechRecognizer.OnSentenceEnd = (res) => {
+        console.log("一句话结束", res);
+        recordingStr += res.result.voice_text_str;
+        if (recordingStr) {
+            webAudioSpeechRecognizer.stop();
+            globalStatus.isRecording = false;
+            hide(2);
+            audioActionElt.style.display = "block";
+            btnExitElt.style.display = "block";
+            callback(recordingStr);
+        }
+    };
+    // 识别结束
+    webAudioSpeechRecognizer.OnRecognitionComplete = (res) => {
+        console.log("识别结束", res);
+    };
+    // 识别错误
+    webAudioSpeechRecognizer.OnError = (res) => {
+        if (typeof res === 'string') {
+            showWarnInfo(res);
+        }
+        console.log("识别失败", res);
+    };
+
+    webAudioSpeechRecognizer.start();
 }
 
 // 发送文本
@@ -492,12 +748,26 @@ async function init() {
     let urlParams = new URLSearchParams(window.location.search);
     let sign = params.sign;
     let virtualmanKey = urlParams.get("virtualmanKey");
+    let secretId = urlParams.get("secretId");
+    let secretKey = urlParams.get("secretKey");
+    let appId = urlParams.get("appId");
     let cosConfig = urlParams.get("config")
     let modelPath = '';
     let actionPaths = [];
     let configPath = '';
     let textArr = [];
     let currentSeq = -1;
+
+    // 是否开启ASR能力
+    const asrAbility = secretId && secretKey && appId
+    if (!asrAbility) {
+        btnMicElt.style.display = 'none';
+        textInputElt.style.marginLeft = '12px';
+    } else {
+        asrConfig.secretId = secretId || '';
+        asrConfig.secretKey = secretKey || '';
+        asrConfig.appId = appId || '';
+    }
 
     if (!mobileAndTabletCheck()) {
         document.body.classList.add("pc");
@@ -637,6 +907,12 @@ async function init() {
             keyboardActionElt.style.display = "block";
 
             initAudio();
+            initASR(() => {
+                textArr = [];
+                sendTextCLient(recordingStr)
+                btnStopCreateElt.style.display = "block";
+                btnRecreateElt.style.display = "none";
+            });
         });
 
         // 弹窗关闭
@@ -691,7 +967,8 @@ async function init() {
 
         // 结束服务按钮事件
         btnExitElt.addEventListener("click", async () => {
-            hide(1 | 4 | 8 | 16 | 32 | 64 | 128);
+            webAudioSpeechRecognizer && webAudioSpeechRecognizer.stop();
+            hide(1 | 2 | 4 | 8 | 16 | 32 | 64 | 128);
             btnReEnterElt.style.display = "block";
             videoArea.style.background = 'initial'
             videoArea.style.display = 'none'
@@ -708,6 +985,14 @@ async function init() {
             hide(1);
             keyboardActionElt.style.display = "block";
             actionElt.classList.remove("audio");
+        });
+
+        // 切换语音输入按钮事件
+        btnMicElt.addEventListener("click", () => {
+            globalStatus.inputActionType = "audio";
+            hide(4);
+            audioActionElt.style.display = "block";
+            actionElt.classList.add("audio");
         });
 
         // 发送文本按钮事件
