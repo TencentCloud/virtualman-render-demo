@@ -792,6 +792,8 @@ async function init() {
         videoArea.style.width = '100%'
         videoArea.style.height = '100%'
 
+        const listeningIndex = actionPaths.findIndex(i => i.includes('listening'));
+
         IVH.init({
             sign,
             element: videoArea,
@@ -799,7 +801,7 @@ async function init() {
             modelPath,
             actionPath: actionPaths,
             configPath,
-            defaultActionIdx: 0
+            defaultActionIdx: listeningIndex >= 0 ? listeningIndex : 0
         });
 
         IVH.on('error', async e => {
@@ -822,10 +824,6 @@ async function init() {
             btnEnterElt.style.display = "block";
             videoArea.style.background = 'white'
             videoArea.style.display = 'none'
-            const listeningIndex = actionPaths.findIndex(i => i.includes('listening'));
-            IVH.loadAction({
-                actionPath: [actionPaths[listeningIndex > -1 ? listeningIndex : 0]]
-            })
         });
 
         IVH.on('nlp', e => {
