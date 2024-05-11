@@ -1,5 +1,5 @@
 <p align='center'>
-  English | <a href="https://github.com/TencentCloud/virtualman-render-demo/blob/main/README.zh-CN.md">Chinese</a>
+  English | <a href="https://github.com/TencentCloud/virtualman-render-demo/blob/main/README.zh-CN.md">中文</a>
 </p>
 
 # Tencent Cloud Virtual Man render H5 demo
