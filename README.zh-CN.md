@@ -2,7 +2,7 @@
  <a href="https://github.com/TencentCloud/virtualman-render-demo/blob/main/README.md"> English</a> | 中文
 </p>
 
-# 腾讯云小微数智人H5渲染 使用示例
+# 腾讯云数智人H5渲染 使用示例
 
 本项目包含端渲染和服务器渲染两种方式。其中端渲染参考[client-render-demo](https://github.com/TencentCloud/virtualman-render-demo/tree/main/client-render-demo)，服务器渲染参考[server-render-demo](https://github.com/TencentCloud/virtualman-render-demo/tree/main/server-render-demo)
 
