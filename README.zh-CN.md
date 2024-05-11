@@ -1,5 +1,5 @@
 <p align='center'>
- <a href="https://github.com/TencentCloud/virtualman-render-demo/blob/main/README.md"> English</a> | 简体中文
+ <a href="https://github.com/TencentCloud/virtualman-render-demo/blob/main/README.md"> English</a> | 中文
 </p>
 
 # 腾讯云小微数智人H5渲染 使用示例
