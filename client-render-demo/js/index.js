@@ -800,7 +800,7 @@ async function init() {
             virtualmanKey,
             modelPath,
             actionPath: actionPaths,
-            configPath,
+            confPath: configPath,
             defaultActionIdx: listeningIndex >= 0 ? listeningIndex : 0
         });
 
