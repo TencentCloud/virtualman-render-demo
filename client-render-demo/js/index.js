@@ -42,6 +42,7 @@ const videoArea = document.querySelector(".video-area");
 const headerBgElt = document.querySelector(".header-bg");
 const symbolRegex = /[^~!@#$%^&*()_+`\-={}|\[\]\\:";'<>?,.、。，；：“”‘’！？【】（）《》\/—～｜]/g;
 const isIOS = /iphone|ipad/i.test(navigator.userAgent);
+const baseModelPath = './model/meta.json';
 let resultSessionId = '';
 
 // 全局状态
@@ -756,7 +757,6 @@ async function init() {
     let secretId = urlParams.get("secretId");
     let secretKey = urlParams.get("secretKey");
     let appId = urlParams.get("appId");
-    let cosConfig = urlParams.get("config")
     let modelPath = '';
     let actionPaths = [];
     let configPath = '';
@@ -778,13 +778,13 @@ async function init() {
         document.body.classList.add("pc");
     }
 
-    if (cosConfig && virtualmanKey && sign) {
-        const response = await fetch(cosConfig)
+    if (virtualmanKey && sign) {
+        const response = await fetch(baseModelPath);
         if (response.ok) {
             const modelConfig = await response.json();
-            modelPath = cosConfig.replace(/meta\.json/, modelConfig.modelPath)
-            actionPaths = modelConfig.actionPaths.map(item => cosConfig.replace(/meta\.json/, item))
-            configPath = cosConfig.replace(/meta\.json/, modelConfig.configPath)
+            modelPath = baseModelPath.replace(/meta\.json/, modelConfig.modelPath)
+            actionPaths = modelConfig.actionPaths.map(item => baseModelPath.replace(/meta\.json/, item))
+            configPath = baseModelPath.replace(/meta\.json/, modelConfig.configPath)
         } else {
             return alert("模型数据获取失败");
         }
