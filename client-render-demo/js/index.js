@@ -782,9 +782,9 @@ async function init() {
         const response = await fetch(baseModelPath);
         if (response.ok) {
             const modelConfig = await response.json();
-            modelPath = baseModelPath.replace(/meta\.json/, modelConfig.modelPath)
-            actionPaths = modelConfig.actionPaths.map(item => baseModelPath.replace(/meta\.json/, item))
-            configPath = baseModelPath.replace(/meta\.json/, modelConfig.configPath)
+            modelPath = modelConfig.modelPath && baseModelPath.replace(/meta\.json/, modelConfig.modelPath)
+            actionPaths = modelConfig.actionPaths && modelConfig.actionPaths.map(item => baseModelPath.replace(/meta\.json/, item))
+            configPath = modelConfig.configPath && baseModelPath.replace(/meta\.json/, modelConfig.configPath)
         } else {
             return alert("模型数据获取失败");
         }
