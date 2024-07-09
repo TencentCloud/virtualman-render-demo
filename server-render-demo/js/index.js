@@ -722,7 +722,7 @@ function getMarkdownHtml(txtArr, highlightSeqNo = -1) {
           }
           // 标题
           case 8: {
-            return text.replace(/^(#+\s+)(.*?)(\n*)$/m, (str, $1, $2, $3) => {
+            return textDisplay.replace(/^(#+\s+)(.*?)(\n*)$/m, (str, $1, $2, $3) => {
               return `${$1}<b id="highlight" style="display: inline; color: rgba(62, 110, 229, 1); font-weight: 500;">${$2}</b>${$3}`;
             });
           }
