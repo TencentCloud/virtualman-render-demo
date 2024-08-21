@@ -40,7 +40,7 @@ const maskElt = document.querySelector(".mask");
 const warnElt = document.querySelector(".warn");
 const videoArea = document.querySelector(".video-area");
 const headerBgElt = document.querySelector(".header-bg");
-const symbolRegex = /[^~!@#$%^&*()_+`\-={}|\[\]\\:";'<>?,.、。，；：“”‘’！？【】（）《》\/—～｜]/g;
+// const symbolRegex = /[^~!@#$%^&*()_+`\-={}|\[\]\\:";'<>?,.、。，；：“”‘’！？【】（）《》\/—～｜]/g;
 const isIOS = /iphone|ipad/i.test(navigator.userAgent);
 const baseModelPath = './model/meta.json';
 let resultSessionId = '';
@@ -624,10 +624,10 @@ function startRecord(callback) {
 // 发送文本
 function sendTextCLient(text, textDrive = false, loop = 0) {
     if (text && text.length) {
-        if (!symbolRegex.test(text)) {
-            alert('请输入正确的文本内容哦～')
-            return
-        }
+        // if (!symbolRegex.test(text)) {
+        //     alert('请输入正确的文本内容哦～')
+        //     return
+        // }
         if (globalStatus.status === "end") {
             hide(1 | 4 | 8 | 16 | 128);
             if (
