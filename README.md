@@ -29,7 +29,7 @@ Copy the project code to your local machine.
 2. Start a local server in this directory.
 3. Open the `index.html` file in your browser. If you are using a local server, you can do this by visiting `http://localhost:3000/index.html`.
 4. Download the model data.
-    ![model download](model-download.png)
+    ![model download](model-download-en.png)
 5. Copy the corresponding 3D model data to the local `model` folder and modify the `meta.json` content in the model folder according to the model name.
 
     Directory structure for the `model` files:
