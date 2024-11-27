@@ -902,7 +902,7 @@ async function init() {
     // SDK初始化
     IVH.init({
       sign,
-      virtualmanKey,
+      virtualmanProjectId: virtualmanKey,
       element: videoArea,
     });
 
