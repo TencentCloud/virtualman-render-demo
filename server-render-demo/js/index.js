@@ -1071,6 +1071,7 @@ async function init() {
           }
           break;
         // 异常
+        case 0:
         case 9:
           textArr = [];
           currentReq = "";
