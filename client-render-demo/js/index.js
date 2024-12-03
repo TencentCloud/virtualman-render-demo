@@ -793,19 +793,24 @@ async function init() {
         videoArea.style.height = '100%'
 
         const listeningIndex = actionPaths.findIndex(i => i.includes('listening'));
-
         IVH.init({
             sign,
             element: videoArea,
-            virtualmanKey,
+            virtualmanProjectId: virtualmanKey,
             modelPath,
             actionPath: actionPaths,
-            confPath: configPath,
+            configPath,
             defaultActionIdx: listeningIndex >= 0 ? listeningIndex : 0
         });
 
         IVH.on('error', async e => {
-            showWarnInfo(e.message);
+            console.log("error", e);
+            if (e.code === 2002) {
+              btnStopCreateElt.click();
+              alert(e.message || "服务异常");
+            } else {
+              showWarnInfo(e.message);
+            }
         })
 
         IVH.on('play', async e => {
