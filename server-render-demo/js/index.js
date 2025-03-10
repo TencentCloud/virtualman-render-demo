@@ -42,6 +42,8 @@ const videoArea = document.querySelector(".video-area");
 const headerBgElt = document.querySelector(".header-bg");
 // const symbolRegex = /[^~!@#$%^&*()_+`\-={}|\[\]\\:";'<>?,.、。，；：“”‘’！？【】（）《》\/—～｜]/g;
 let resultSessionId = '';
+var isInit = false; // 全局，client.js里要用
+var isReasonPrintting = false;
 
 // 全局状态
 const globalStatus = {
@@ -124,6 +126,20 @@ function hide(type) {
   if (type & 4) {
     textInputElt.innerText = "";
     keyboardActionElt.style.display = "none";
+    // 清除参考资料
+    var refs = document.getElementById('refs-title');
+    refs && removeEventListener('click', toggleReferences);
+    chatAiTextElt.querySelector('.refs').innerHTML = "";
+    chatAiTextElt.querySelector('.refs').style.display = "none";
+    
+    var reasonTrigger = document.getElementById('reason-title');
+    reasonTrigger && removeEventListener('click', toggleReason);
+    chatAiTextElt.querySelector(".reason pre").innerHTML = "";
+    chatAiTextElt.querySelector("#reason-title").innerHTML = "";
+    chatAiTextElt.querySelector('.reason').style.display = "none";
+    chatAiTextElt.querySelector(".chat-ai-text .answer pre").innerHTML = "";
+  
+    
   }
   // 关闭跑马灯
   if (type & 8) {
@@ -159,8 +175,109 @@ function hide(type) {
   }
 }
 
+// 定义命名函数
+function toggleReferences() {
+  var references = document.getElementById('links-wrapper');
+  if (references.style.display === 'none' || references.style.display === '') {
+      references.style.display = 'block';
+      document.getElementById('refs-toggle').style.transform='rotate(180deg)';
+  } else {
+      references.style.display = 'none';
+      document.getElementById('refs-toggle').style.transform='rotate(0deg)';
+  }
+}
+function showRefs(refs) {
+  if (!isInit) {
+    return 
+  }
+    if (document.getElementById('refs-toggle')) {
+      // 如果已经存在,不重复渲染,避免影响用户界面和交互
+      return;
+    }
+    var isBottom = isElementScrolledToBottom(document.querySelector('.chat-ai-text div'));
+    const fragment = document.createDocumentFragment();
+    // 找到13篇资料参考
+    const refsTitle = document.createElement('div');
+    refsTitle.innerHTML = '<div id="refs-title"><span class="refs-title-text">找到' + refs.length + '篇资料参考</span> <span id="refs-toggle"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22" fill="none"> <use xlink:href="#icon-arrow"></use>'
+       + '</svg></span></div>'
+    fragment.appendChild(refsTitle);
+    const linksWrapper = document.createElement('div');
+    linksWrapper.id = 'links-wrapper';
+    refs.forEach((ref) => {
+        var linkElement = document.createElement('a');
+        linkElement.href = ref.url;
+        linkElement.textContent = ref.id + '.' + ref.name;
+        linkElement.target = "_blank"; // 在新标签页中打开链接
+        linkElement.setAttribute('title', ref.name);
+        // 创建一个列表项元素并将链接元素添加到其中
+        // var listItem = document.createElement('li');
+        // listItem.appendChild(linkElement);
+        linksWrapper.appendChild(linkElement);
+    });
+    
+    fragment.appendChild(linksWrapper);
+    chatAiTextElt.querySelector('.refs').appendChild(fragment);
+    chatAiTextElt.querySelector('.refs').style.display = "block";
+    document.getElementById('refs-title').addEventListener('click', toggleReferences);
+    
+    if(isBottom) {
+      scrollToBottom();
+    }
+}
+
+function toggleReason() {
+  var references = document.querySelector('.reason pre');
+  if (references.style.display === 'block' || references.style.display === '') {
+    references.style.display = 'none';
+    document.getElementById('reason-toggle').style.transform='rotate(0deg)';
+  } else {
+    references.style.display = 'block';
+    document.getElementById('reason-toggle').style.transform='rotate(180deg)';
+  }
+
+}
+let thinkTimeStart;
+
+function showReason(type, opt) {
+  if (!isInit) {
+    return ;
+  }
+  if (opt.isFirst) {
+    thinkTimeStart = Date.now();
+    chatAiTextElt.querySelector(".reason").style.display = "block";
+    document.getElementById('reason-title').innerHTML = '<span id="text">思考中<svg xmlns="http://www.w3.org/2000/svg" width="12" height="14" viewBox="0 0 12 14" fill="none" class="reasonning"> <use xlink:href="#icon-reasonning"></use></svg></span><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22" fill="none" class="arrow" id="reason-toggle"> <use xlink:href="#icon-arrow"></use></svg>';
+    btnStopCreateElt.style.display =
+    globalStatus.status === "sending" ? "block" : "none";
+    chatAiTextElt.style.display = "block";
+    isReasonPrintting = true;
+    document.getElementById('reason-title').addEventListener('click', toggleReason);
+    document.querySelector('.reason pre').style.display = "block";
+  }
+  var isBottom = isElementScrolledToBottom(document.querySelector('.chat-ai-text div'));
+  chatAiTextElt.querySelector(".reason pre").innerHTML = opt.text;
+  if(isBottom) {
+    scrollToBottom();
+  }
+}
+function isElementScrolledToBottom(element) {
+  return element.scrollHeight - element.scrollTop - element.clientHeight < 20;
+}
+function scrollToBottom(){
+  chatAiTextElt.querySelector("div").scrollTo(0, chatAiTextElt.querySelector("div").scrollHeight);
+}
+function endReason() {
+  if (document.getElementById('text') && isReasonPrintting){
+    const timeSpan = Math.floor((Date.now() - thinkTimeStart)/1000)
+    document.getElementById('text').innerHTML = `已深度思考（用时${timeSpan}秒）`;
+  }
+  isReasonPrintting = false;
+}
 // 气泡上屏
 function showChat(type, opt) {
+  if (!isInit) {
+    return ;
+  }
+  endReason();
   switch (type) {
     // 正常文字气泡
     case "Text": {
@@ -168,27 +285,32 @@ function showChat(type, opt) {
         chatUserElt.querySelector("div").textContent = opt.text;
         chatUserElt.style.display = "block";
       } else if (opt.type === "ai" && !globalStatus.marqueeRAFID && opt.text) {
+        var isBottom = isElementScrolledToBottom(document.querySelector('.chat-ai-text div'));
         if (opt.isHTML) {
-          chatAiTextElt.querySelector("div pre").innerHTML = opt.text;
+          chatAiTextElt.querySelector(".answer pre").innerHTML = opt.text;
         } else {
-          chatAiTextElt.querySelector("div pre").textContent = extractText(
+          chatAiTextElt.querySelector(".answer pre").textContent = extractText(
             opt.text
           );
         }
         chatAiTextElt.style.display = "block";
-        // 自动滚动
-        const elt = chatAiTextElt.querySelector("#highlight");
-        if (elt) {
-          const rect = elt.getBoundingClientRect();
-          const eltRoot = chatAiTextElt.querySelector("div");
-          const rectRoot = eltRoot.getBoundingClientRect();
-          const sTop = rect.top + eltRoot.scrollTop - rectRoot.top;
-          // console.log(eltRoot.scrollHeight, sTop)
-          if (sTop > aiTextScrollTop) {
-            aiTextScrollTop = sTop;
-          }
-          chatAiTextElt.querySelector("div").scrollTo(0, aiTextScrollTop);
+        if(isBottom) {
+          scrollToBottom();
         }
+        // 自动滚动
+        // const elt = chatAiTextElt.querySelector("#highlight");
+        // if (elt) {
+         
+          // const rect = elt.getBoundingClientRect();
+          // const eltRoot = chatAiTextElt.querySelector("div");
+          // const rectRoot = eltRoot.getBoundingClientRect();
+          // const sTop = rect.top + eltRoot.scrollTop - rectRoot.top;
+          // // console.log(eltRoot.scrollHeight, sTop)
+          // if (sTop > aiTextScrollTop) {
+          //   aiTextScrollTop = sTop;
+          // }
+          // chatAiTextElt.querySelector("div").scrollTo(0, aiTextScrollTop);
+        // }
       }
       break;
     }
@@ -368,10 +490,10 @@ function initAudio() {
         globalStatus.audioCtx = new (window.AudioContext ||
           window.webkitAudioContext)();
       })
-    ["catch"](function (e) {
-      alert("没有获得麦克风权限!请允许使用麦克风权限后刷新页面重试!");
-      console.error("media error:", e);
-    });
+      ["catch"](function (e) {
+        alert("没有获得麦克风权限!请允许使用麦克风权限后刷新页面重试!");
+        console.error("media error:", e);
+      });
   } else {
     if (
       navigator.userAgent.toLowerCase().match(/chrome/) &&
@@ -723,7 +845,7 @@ function getMarkdownHtml(txtArr, highlightSeqNo = -1) {
           // 标题
           case 8: {
             return textDisplay.replace(/^(#+\s+)(.*?)(\n*)$/m, (str, $1, $2, $3) => {
-              return `${$1}<b id="highlight" style="display: inline; color: rgba(62, 110, 229, 1); font-weight: 500;">${$2}</b>${$3}`;
+                return `${$1}<b id="highlight" style="display: inline; color: rgba(62, 110, 229, 1); font-weight: 500;">${$2}</b>${$3}`;
             });
           }
           default: {
@@ -755,7 +877,7 @@ function getMarkdownHtml(txtArr, highlightSeqNo = -1) {
 
 /**
  * 处理不同分辨率video
- * @returns 
+ * @returns
  */
 function handleResizeVideo() {
   const video = document.getElementById('ivh-video_html5_api');
@@ -835,29 +957,29 @@ const generateUserId = () => {
 
 /**
  * 点击三下屏幕展示sessionId
- * @returns 
+ * @returns
  */
 function handleShowSessionId(sessionId) {
   let clickCount = 0, clickTimer = null, clickSpeed = 500;
   document.addEventListener('click', () => {
-    if (clickCount === 0 || clickTimer === null) {
-      clickCount++;
-      clickTimer = setTimeout(() => {
+      if (clickCount === 0 || clickTimer === null) {
+        clickCount++;
+        clickTimer = setTimeout(() => {
+          clickCount = 0;
+          clearTimeout(clickTimer);
+          clickTimer = null;
+      }, clickSpeed)
+      } else {
+        clickCount++;
+      }
+      if (clickCount === 3) {
         clickCount = 0;
         clearTimeout(clickTimer);
         clickTimer = null;
-      }, clickSpeed)
-    } else {
-      clickCount++;
-    }
-    if (clickCount === 3) {
-      clickCount = 0;
-      clearTimeout(clickTimer);
-      clickTimer = null;
-      if (sessionId) {
-        alert(sessionId);
+        if (sessionId) {
+          alert(sessionId);
+        }
       }
-    }
   }, { capture: false })
 }
 
@@ -879,7 +1001,11 @@ async function init() {
   let secretKey = urlParams.get("secretKey");
   let appId = urlParams.get("appId");
   let autoMarquee = urlParams.get("autoMarquee");
+  let env = urlParams.get("env");
+  let appKey = urlParams.get("appKey");
+  let accessToken = urlParams.get("accessToken");
   let textArr = [];
+  let reasonArr = [];
   let currentReq = "";
   let currentSeq = -1;
 
@@ -935,7 +1061,7 @@ async function init() {
               messageContent = '检测到您正在新窗口访问本链接，当前窗口自动关闭';
               break;
             default:
-              messageContent = e.message;
+                messageContent = e.message;
               break;
           }
         }
@@ -1026,6 +1152,15 @@ async function init() {
             globalStatus.status = "end";
           }
           break;
+          case 5:
+            reasonArr.push(data);
+            showReason("Text", {
+                isFirst: reasonArr.length === 1,
+                text: getMarkdownHtml(reasonArr),
+                type: "ai",
+                isHTML: true,
+              });
+            break;
         // 内容消息
         case 2:
         case 4:
@@ -1061,6 +1196,18 @@ async function init() {
                 button: JSON.parse(data.interactionContent).button,
               });
             } else {
+              if (data.cloudAiExtra !== "") {
+                try { 
+                  // 判断显示参考来源
+                  var cloudAiExtra = JSON.parse(data.cloudAiExtra);
+                  var refs = cloudAiExtra.references;
+                  if(refs) {
+                    showRefs(refs);
+                  }
+                } catch (e) {
+                  console.log(e);
+                }
+              }
               textArr.push(data);
               showChat("Text", {
                 text: getMarkdownHtml(textArr, currentSeq),
@@ -1110,6 +1257,7 @@ async function init() {
     btnEnterElt.addEventListener("click", async () => {
       const result = await IVH.startSession();
       if (result) {
+        isInit = true;
         initAudio();
         initASR();
         btnEnterElt.style.display = "none";
@@ -1191,6 +1339,7 @@ async function init() {
       webAudioSpeechRecognizer && webAudioSpeechRecognizer.stop();
       await IVH.closeSession();
       hide(1 | 2 | 4 | 8 | 16 | 32 | 64 | 128);
+      isInit = false;
       btnReEnterElt.style.display = "block";
     });
 
@@ -1245,6 +1394,9 @@ async function init() {
     // 停止回答按钮事件
     btnStopCreateElt.addEventListener("click", () => {
       IVH.stop();
+      if(isReasonPrintting){
+        document.querySelector('#reason-title #text').innerHTML = "思考已停止";
+      }
       chatAiTextElt.classList.add("stop");
     });
 
@@ -1265,4 +1417,4 @@ async function init() {
   }
 }
 
-init();
+      init();

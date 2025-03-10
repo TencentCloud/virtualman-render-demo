@@ -41,6 +41,8 @@ const warnElt = document.querySelector(".warn");
 const videoArea = document.querySelector(".video-area");
 const headerBgElt = document.querySelector(".header-bg");
 // const symbolRegex = /[^~!@#$%^&*()_+`\-={}|\[\]\\:";'<>?,.、。，；：“”‘’！？【】（）《》\/—～｜]/g;
+var isInit = false; // 全局，client.js里要用
+var isReasonPrintting = false;
 const isIOS = /iphone|ipad/i.test(navigator.userAgent);
 const baseModelPath = './model/meta.json';
 let resultSessionId = '';
@@ -126,6 +128,20 @@ function hide(type) {
     if (type & 4) {
         textInputElt.innerText = "";
         keyboardActionElt.style.display = "none";
+        // 清除参考资料
+        var refs = document.getElementById('refs-title');
+        refs && removeEventListener('click', toggleReferences);
+        chatAiTextElt.querySelector('.refs').innerHTML = "";
+        chatAiTextElt.querySelector('.refs').style.display = "none";
+
+        var reasonTrigger = document.getElementById('reason-title');
+        reasonTrigger && removeEventListener('click', toggleReason);
+        chatAiTextElt.querySelector(".reason pre").innerHTML = "";
+        chatAiTextElt.querySelector("#reason-title").innerHTML = "";
+        chatAiTextElt.querySelector('.reason').style.display = "none";
+        chatAiTextElt.querySelector(".chat-ai-text .answer pre").innerHTML = "";
+
+
     }
     // 关闭跑马灯
     if (type & 8) {
@@ -161,8 +177,109 @@ function hide(type) {
     }
 }
 
+// 定义命名函数
+function toggleReferences() {
+    var references = document.getElementById('links-wrapper');
+    if (references.style.display === 'none' || references.style.display === '') {
+        references.style.display = 'block';
+        document.getElementById('refs-toggle').style.transform = 'rotate(180deg)';
+    } else {
+        references.style.display = 'none';
+        document.getElementById('refs-toggle').style.transform = 'rotate(0deg)';
+    }
+}
+function showRefs(refs) {
+    if (!isInit) {
+        return
+    }
+    if (document.getElementById('refs-toggle')) {
+        // 如果已经存在,不重复渲染,避免影响用户界面和交互
+        return;
+    }
+    var isBottom = isElementScrolledToBottom(document.querySelector('.chat-ai-text div'));
+    const fragment = document.createDocumentFragment();
+    // 找到13篇资料参考
+    const refsTitle = document.createElement('div');
+    refsTitle.innerHTML = '<div id="refs-title"><span class="refs-title-text">找到' + refs.length + '篇资料参考</span> <span id="refs-toggle"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22" fill="none"> <use xlink:href="#icon-arrow"></use>'
+        + '</svg></span></div>'
+    fragment.appendChild(refsTitle);
+    const linksWrapper = document.createElement('div');
+    linksWrapper.id = 'links-wrapper';
+    refs.forEach((ref) => {
+        var linkElement = document.createElement('a');
+        linkElement.href = ref.url;
+        linkElement.textContent = ref.id + '.' + ref.name;
+        linkElement.target = "_blank"; // 在新标签页中打开链接
+        linkElement.setAttribute('title', ref.name);
+        // 创建一个列表项元素并将链接元素添加到其中
+        // var listItem = document.createElement('li');
+        // listItem.appendChild(linkElement);
+        linksWrapper.appendChild(linkElement);
+    });
+
+    fragment.appendChild(linksWrapper);
+    chatAiTextElt.querySelector('.refs').appendChild(fragment);
+    chatAiTextElt.querySelector('.refs').style.display = "block";
+    document.getElementById('refs-title').addEventListener('click', toggleReferences);
+
+    if (isBottom) {
+        scrollToBottom();
+    }
+}
+
+function toggleReason() {
+    var references = document.querySelector('.reason pre');
+    if (references.style.display === 'block' || references.style.display === '') {
+        references.style.display = 'none';
+        document.getElementById('reason-toggle').style.transform = 'rotate(0deg)';
+    } else {
+        references.style.display = 'block';
+        document.getElementById('reason-toggle').style.transform = 'rotate(180deg)';
+    }
+
+}
+let thinkTimeStart;
+
+function showReason(type, opt) {
+    if (!isInit) {
+        return;
+    }
+    if (opt.isFirst) {
+        thinkTimeStart = Date.now();
+        chatAiTextElt.querySelector(".reason").style.display = "block";
+        document.getElementById('reason-title').innerHTML = '<span id="text">思考中<svg xmlns="http://www.w3.org/2000/svg" width="12" height="14" viewBox="0 0 12 14" fill="none" class="reasonning"> <use xlink:href="#icon-reasonning"></use></svg></span><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22" fill="none" class="arrow" id="reason-toggle"> <use xlink:href="#icon-arrow"></use></svg>';
+        btnStopCreateElt.style.display =
+            globalStatus.status === "sending" ? "block" : "none";
+        chatAiTextElt.style.display = "block";
+        isReasonPrintting = true;
+        document.getElementById('reason-title').addEventListener('click', toggleReason);
+        document.querySelector('.reason pre').style.display = "block";
+    }
+    var isBottom = isElementScrolledToBottom(document.querySelector('.chat-ai-text div'));
+    chatAiTextElt.querySelector(".reason pre").innerHTML = opt.text;
+    if (isBottom) {
+        scrollToBottom();
+    }
+}
+function isElementScrolledToBottom(element) {
+    return element.scrollHeight - element.scrollTop - element.clientHeight < 20;
+}
+function scrollToBottom() {
+    chatAiTextElt.querySelector("div").scrollTo(0, chatAiTextElt.querySelector("div").scrollHeight);
+}
+function endReason() {
+    if (document.getElementById('text') && isReasonPrintting) {
+        const timeSpan = Math.floor((Date.now() - thinkTimeStart) / 1000)
+        document.getElementById('text').innerHTML = `已深度思考（用时${timeSpan}秒）`;
+    }
+    isReasonPrintting = false;
+}
 // 气泡上屏
 function showChat(type, opt) {
+    if (!isInit) {
+        return;
+    }
+    endReason();
     switch (type) {
         // 正常文字气泡
         case "Text": {
@@ -170,27 +287,32 @@ function showChat(type, opt) {
                 chatUserElt.querySelector("div").textContent = opt.text;
                 chatUserElt.style.display = "block";
             } else if (opt.type === "ai" && !globalStatus.marqueeRAFID && opt.text) {
+                var isBottom = isElementScrolledToBottom(document.querySelector('.chat-ai-text div'));
                 if (opt.isHTML) {
-                    chatAiTextElt.querySelector("div pre").innerHTML = opt.text;
+                    chatAiTextElt.querySelector(".answer pre").innerHTML = opt.text;
                 } else {
-                    chatAiTextElt.querySelector("div pre").textContent = extractText(
+                    chatAiTextElt.querySelector(".answer pre").textContent = extractText(
                         opt.text
                     );
                 }
                 chatAiTextElt.style.display = "block";
-                // 自动滚动
-                const elt = chatAiTextElt.querySelector("#highlight");
-                if (elt) {
-                    const rect = elt.getBoundingClientRect();
-                    const eltRoot = chatAiTextElt.querySelector("div");
-                    const rectRoot = eltRoot.getBoundingClientRect();
-                    const sTop = rect.top + eltRoot.scrollTop - rectRoot.top;
-                    // console.log(eltRoot.scrollHeight, sTop)
-                    if (sTop > aiTextScrollTop) {
-                        aiTextScrollTop = sTop;
-                    }
-                    chatAiTextElt.querySelector("div").scrollTo(0, aiTextScrollTop);
+                if (isBottom) {
+                    scrollToBottom();
                 }
+                // 自动滚动
+                // const elt = chatAiTextElt.querySelector("#highlight");
+                // if (elt) {
+
+                // const rect = elt.getBoundingClientRect();
+                // const eltRoot = chatAiTextElt.querySelector("div");
+                // const rectRoot = eltRoot.getBoundingClientRect();
+                // const sTop = rect.top + eltRoot.scrollTop - rectRoot.top;
+                // // console.log(eltRoot.scrollHeight, sTop)
+                // if (sTop > aiTextScrollTop) {
+                //   aiTextScrollTop = sTop;
+                // }
+                // chatAiTextElt.querySelector("div").scrollTo(0, aiTextScrollTop);
+                // }
             }
             break;
         }
@@ -616,7 +738,7 @@ function startRecord(callback) {
             showWarnInfo(res);
         }
         console.log("识别失败", res);
-    };
+    };webAudioSpeechRecognizer
 
     webAudioSpeechRecognizer.start();
 }
@@ -806,12 +928,13 @@ async function init() {
         IVH.on('error', async e => {
             console.log("error", e);
             if (e.code === 2002) {
-              btnStopCreateElt.click();
-              alert(e.message || "服务异常");
+                btnStopCreateElt.click();
+                alert(e.message || "服务异常");
             } else {
-              showWarnInfo(e.message);
+                console.log(e.message);
+                // showWarnInfo(e.message);
             }
-        })
+        });
 
         IVH.on('play', async e => {
             btnStopCreateElt.style.display = "none";
@@ -833,7 +956,7 @@ async function init() {
 
         IVH.on('nlp', e => {
             if (e.code === 0) {
-                const { interactionType, replyDisplay, interactionContent } = e.data
+                const { interactionType, replyDisplay, interactionContent, cloudAiExtra, replyType } = e.data;
                 switch (interactionType) {
                     case 'OptionInfo': {
                         showChat(interactionType, {
@@ -869,6 +992,28 @@ async function init() {
                         break;
                     }
                     default: {
+                        if (replyType === 'cloudAiThought') {
+                            reasonArr.push(e.data);
+                            showReason("Text", {
+                                isFirst: reasonArr.length === 1,
+                                text: getClientMarkdownHtml(reasonArr),
+                                type: "ai",
+                                isHTML: true,
+                            });
+                            break;
+                        }
+                        if (cloudAiExtra !== "") {
+                            try {
+                                // 判断显示参考来源
+                                var cloudAiExtraObj = JSON.parse(cloudAiExtra);
+                                var refs = cloudAiExtraObj.references;
+                                if (refs) {
+                                    showRefs(refs);
+                                }
+                            } catch (e) {
+                                console.log(e);
+                            }
+                        }
                         textArr.push(e.data);
                         showChat("Text", {
                             text: getClientMarkdownHtml(textArr, currentSeq),
@@ -921,6 +1066,7 @@ async function init() {
                 btnStopCreateElt.style.display = "block";
                 btnRecreateElt.style.display = "none";
             });
+            isInit = true;
         });
 
         // 弹窗关闭
@@ -976,10 +1122,12 @@ async function init() {
         // 结束服务按钮事件
         btnExitElt.addEventListener("click", async () => {
             webAudioSpeechRecognizer && webAudioSpeechRecognizer.stop();
+            IVH.stop();
             hide(1 | 2 | 4 | 8 | 16 | 32 | 64 | 128);
             btnReEnterElt.style.display = "block";
             videoArea.style.background = 'initial'
-            videoArea.style.display = 'none'
+            videoArea.style.display = 'none';
+            isInit = false;
         });
 
         // 再次服务按钮事件
@@ -1011,6 +1159,7 @@ async function init() {
             }
             if (text && text.length) {
                 textArr = [];
+                reasonArr = [];
                 sendTextCLient(text);
                 textInputElt.innerText = "";
                 btnStopCreateElt.style.display = "none";
@@ -1026,6 +1175,7 @@ async function init() {
                     return alert("超出最长提问字数限制, 请控制在4000字以内!");
                 }
                 textArr = [];
+                reasonArr = [];
                 sendTextCLient(elt.innerText.trim());
                 elt.innerText = "";
                 btnStopCreateElt.style.display = "none";
@@ -1039,6 +1189,7 @@ async function init() {
         // 停止回答按钮事件
         btnStopCreateElt.addEventListener("click", () => {
             textArr = [];
+            reasonArr = [];
             IVH.stop();
             chatAiTextElt.classList.add("stop");
             btnStopCreateElt.style.display = "none";
@@ -1048,7 +1199,10 @@ async function init() {
             } else {
                 keyboardActionElt.style.display = "block";
             }
-            globalStatus.status = "end"
+            if (isReasonPrintting) {
+                document.querySelector('#reason-title #text').innerHTML = "思考已停止";
+            }
+            globalStatus.status = "end";
         });
 
         // 重新生成按钮事件
@@ -1056,6 +1210,7 @@ async function init() {
             var text = chatUserElt.querySelector("div").textContent;
             if (text && text.length) {
                 textArr = [];
+                reasonArr = [];
                 sendTextCLient(text);
                 btnStopCreateElt.style.display = "none";
                 btnRecreateElt.style.display = "none";
