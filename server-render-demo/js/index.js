@@ -696,6 +696,7 @@ async function initASR() {
 // 开始ASR识别
 function startRecord() {
   webAudioSpeechRecognizer = new WebAudioSpeechRecognizer(asrParams);
+  window.webAudioSpeechRecognizer = webAudioSpeechRecognizer; // 暴露出去方便关闭
   // 开始识别
   webAudioSpeechRecognizer.OnRecognitionStart = (res) => {
     console.log("开始识别", res);
@@ -725,6 +726,8 @@ function startRecord() {
       btnExitElt.style.display = "block";
       sendText(recordingStr);
     }
+    window.webAudioSpeechRecognizer = null;
+    webAudioSpeechRecognizer = null;
   };
   // 识别结束
   webAudioSpeechRecognizer.OnRecognitionComplete = (res) => {
@@ -1103,6 +1106,7 @@ async function init() {
         // 用户的输入 清空返回数组
         case 1:
           textArr = [];
+          reasonArr = [];
           currentReq = data.reqId;
           btnStopCreateElt.style.display = "none";
           btnRecreateElt.style.display = "none";
