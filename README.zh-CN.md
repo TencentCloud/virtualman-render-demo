@@ -57,7 +57,7 @@ chrome浏览器。
     ```
     如果下载的模型中没有`config.json`文件，则需要从`meta.json`中删除`configPath`配置项。
 6. 添加执行的URL参数，例如：`http://localhost:3000/index.html?virtualmanKey=xxxx&sign=xxxx`。
- - `virtualmanKey`: 形象唯一标识。你可以通过[获取密钥](https://cloud.tencent.com/document/product/1240/104050#2e81fe93-d83f-4d22-b916-5d1d427d577f)并按照指定的步骤来获取这个值。
+ - `virtualmanProjectId`: 形象唯一标识。你可以通过[获取密钥](https://cloud.tencent.com/document/product/1240/104050#2e81fe93-d83f-4d22-b916-5d1d427d577f)并按照指定的步骤来获取这个值。
  - `sign`: 签名。请注意，这里不需要进行 URL 编码。同样可以通过访问[获取密钥](https://cloud.tencent.com/document/product/1240/104050#2e81fe93-d83f-4d22-b916-5d1d427d577f)获取。
 
 #### 服务器渲染示例
@@ -65,8 +65,8 @@ chrome浏览器。
 1. 打开 `server-render-demo` 目录。
 2. 在此目录中启动一个本地服务器。
 3. 在浏览器中打开`index.html`文件。如果你正在使用本地服务器，你可以通过访问`http://localhost:3000/index.html`来做到这一点。 
-4. 添加执行的URL参数，例如：`http://localhost:3000/index.html?virtualmanKey=xxxx&sign=xxxx`。
- - `virtualmanKey`: 形象唯一标识。你可以通过[获取密钥](https://cloud.tencent.com/document/product/1240/104050#2e81fe93-d83f-4d22-b916-5d1d427d577f)并按照指定的步骤来获取这个值。
+4. 添加执行的URL参数，例如：`http://localhost:3000/index.html?virtualmanProjectId=xxxx&sign=xxxx`。
+ - `virtualmanProjectId`: 形象唯一标识。你可以通过[获取密钥](https://cloud.tencent.com/document/product/1240/104050#2e81fe93-d83f-4d22-b916-5d1d427d577f)并按照指定的步骤来获取这个值。
  - `sign`: 签名。请注意，这里不需要进行 URL 编码。同样可以通过访问[获取密钥](https://cloud.tencent.com/document/product/1240/104050#2e81fe93-d83f-4d22-b916-5d1d427d577f)获取。
 
 ### 语音识别能力

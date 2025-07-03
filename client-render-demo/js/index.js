@@ -47,6 +47,30 @@ const isIOS = /iphone|ipad/i.test(navigator.userAgent);
 const baseModelPath = './model/meta.json';
 let resultSessionId = '';
 
+// 自定义 marked 解析规则，禁止单 `~` 被解析为删除线
+marked.use({
+    extensions: [
+      {
+        name: 'no-single-tilde',
+        level: 'inline',
+        start(src) {
+          return src.match(/~[^~]/)?.index; // 查找单个 `~`
+        },
+        tokenizer(src, tokens) {
+          const match = src.match(/^~([^~]+)~/);
+          if (match) {
+            return {
+              type: 'text',
+              raw: match[0],
+              text: match[0], // 让 `~xxx~` 保持原样
+            };
+          }
+          return undefined;
+        },
+      },
+    ],
+  });
+
 // 全局状态
 const globalStatus = {
     isInitAnalyser: false,
@@ -876,6 +900,7 @@ async function init() {
     let urlParams = new URLSearchParams(window.location.search);
     let sign = params.sign;
     let virtualmanKey = urlParams.get("virtualmanKey");
+    let virtualmanProjectId = urlParams.get("virtualmanProjectId") ?? virtualmanKey;
     let secretId = urlParams.get("secretId");
     let secretKey = urlParams.get("secretKey");
     let appId = urlParams.get("appId");
@@ -900,7 +925,7 @@ async function init() {
         document.body.classList.add("pc");
     }
 
-    if (virtualmanKey && sign) {
+    if (virtualmanProjectId && sign) {
         const response = await fetch(baseModelPath);
         if (response.ok) {
             const modelConfig = await response.json();
@@ -918,7 +943,7 @@ async function init() {
         IVH.init({
             sign,
             element: videoArea,
-            virtualmanProjectId: virtualmanKey,
+            virtualmanProjectId,
             modelPath,
             actionPath: actionPaths,
             configPath,
