@@ -860,10 +860,10 @@ ol {
   position: absolute;
   bottom: 0;
 }
-.video-area > canvas {
+/* .video-area > canvas {
   margin-left: 50%;
   transform: translateX(-50%);
-}
+} */ /* 云渲染不需要，可能会形象透明背景sdk内部样式 */
 .refs{
   border-radius: 6px;
   background: rgba(37, 85, 144, 0.10);

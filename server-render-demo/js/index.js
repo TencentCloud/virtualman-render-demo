@@ -44,6 +44,7 @@ const headerBgElt = document.querySelector(".header-bg");
 let resultSessionId = '';
 var isInit = false; // 全局，client.js里要用
 var isReasonPrintting = false;
+let alphaChannelEnable = ''; //是否使用透明背景视频流，值为1则使用透明背景
 
 // 自定义 marked 解析规则，禁止单 `~` 被解析为删除线
 marked.use({
@@ -918,23 +919,26 @@ function handleResizeVideo() {
   }
 
   video.addEventListener('play', function () {
-    const width = video.videoWidth;
-    const height = video.videoHeight;
+    // const width = video.videoWidth;
+    // const height = video.videoHeight;
 
-    if (width >= height) {
-      const videoWidth = videoArea.getBoundingClientRect().width;
-      videoArea.style.width = '100%';
-      videoArea.style.height = `${videoWidth * height / width}px`;
-      playerElt.style.width = '100%';
-      playerElt.style.height = `${videoWidth * height / width}px`;
-      wrapperElt.classList.add('chat');
-      videoArea.classList.add('bg');
-    } else {
-      videoArea.style.width = '100%';
-      videoArea.style.height = isMobile ? '100%' : 'calc(100% - 64px)';
-      playerElt.style.width = '100%';
-      playerElt.style.height = '100%';
-    }
+    // if (width >= height) {
+    //   const videoWidth = videoArea.getBoundingClientRect().width || wrapperElt.getBoundingClientRect().width;
+    //   videoArea.style.width = '100%';
+    //   videoArea.style.height = `${videoWidth * height / width}px`;
+    //   playerElt.style.width = '100%';
+    //   playerElt.style.height = `${videoWidth * height / width}px`;
+    //   wrapperElt.classList.add('chat');
+    //   videoArea.classList.add('bg');
+    // } else {
+    //   videoArea.style.width = '100%';
+    //   videoArea.style.height = isMobile ? '100%' : 'calc(100% - 64px)';
+    //   playerElt.style.width = '100%';
+    //   playerElt.style.height = '100%';
+    // }
+    videoArea.style.height = isMobile ? '100%' : 'calc(100% - 64px)';
+    videoArea.style.width = '100%';
+    wrapperElt.classList.add('chat');
 
     if (!isMobile) {
       // 吸取顶部像素颜色
@@ -946,7 +950,7 @@ function handleResizeVideo() {
       const pixelData = ctx.getImageData(0, 0, 1, 1).data;
       const backgroundColor = `rgb(${pixelData[0]}, ${pixelData[1]}, ${pixelData[2]})`;
       headerBgElt.style.display = 'block';
-      headerBgElt.style.backgroundColor = backgroundColor;
+      headerBgElt.style.backgroundColor = alphaChannelEnable === '1' ?  'transparent' : backgroundColor;
     }
   });
 }
@@ -1020,6 +1024,7 @@ async function init() {
   let secretKey = urlParams.get("secretKey");
   let appId = urlParams.get("appId");
   let autoMarquee = urlParams.get("autoMarquee");
+  alphaChannelEnable = urlParams.get("alphaChannelEnable");
   let env = urlParams.get("env");
   let appKey = urlParams.get("appKey");
   let accessToken = urlParams.get("accessToken");
@@ -1094,7 +1099,7 @@ async function init() {
     });
 
     // 建流
-    const result = await IVH.createSession({ userId: generateUserId() });
+    const result = await IVH.createSession({ userId: generateUserId() ,extraInfo: {alphaChannelEnable: alphaChannelEnable === '1'} });
 
     // document添加点击事件
     if (result) {
